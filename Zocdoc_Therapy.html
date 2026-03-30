@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zocdoc — Therapy</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --yellow: #FFE234;
+    --yellow-dark: #e6cb00;
+    --yellow-light: #FFFBE8;
+    --ink: #1a1a1a;
+    --ink-mid: #3d3d3d;
+    --ink-muted: #767676;
+    --border: #e8e8e8;
+    --border-hover: #c0c0c0;
+    --bg: #FAFAF5;
+    --white: #ffffff;
+    --green: #00a651;
+    --green-light: #e8f7f0;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-pill: 99px;
+    --transition: 0.18s ease;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-logo {
+    width: 34px; height: 34px;
+    background: var(--yellow);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: var(--ink);
+    flex-shrink: 0;
+  }
+  .search-bar {
+    flex: 1;
+    display: flex;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    max-width: 640px;
+  }
+  .search-seg {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    border: none;
+    outline: none;
+    color: var(--ink);
+    background: transparent;
+  }
+  .search-seg:not(:last-child) { border-right: 1px solid var(--border); }
+  .search-btn {
+    width: 36px; height: 36px;
+    background: var(--yellow);
+    border: none;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-size: 15px;
+    margin: 2px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── FILTER PILLS ── */
+  .filter-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-pill {
+    padding: 7px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    background: var(--white);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  .filter-pill:hover { border-color: var(--border-hover); }
+  .filter-pill.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .results-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .shield { color: var(--green); font-size: 20px; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeUp 0.25s ease both; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── PROVIDER CARD ── */
+  .provider-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .card-body {
+    display: flex;
+    gap: 0;
+  }
+
+  /* Left: provider info */
+  .provider-left {
+    padding: 18px;
+    flex: 0 0 280px;
+    border-right: 1px solid var(--border);
+  }
+  .provider-top {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .provider-photo {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #c8d8d4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600; color: #4a7c6f;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .video-badge {
+    position: absolute;
+    bottom: 0; right: 0;
+    background: var(--ink);
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: white;
+  }
+  .provider-name-block { flex: 1; }
+  .sponsored-tag {
+    font-size: 11px;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 1px 8px;
+    margin-bottom: 4px;
+    display: inline-block;
+  }
+  .provider-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+  .provider-title {
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .provider-meta {
+    font-size: 12px;
+    color: var(--ink-mid);
+    line-height: 1.8;
+  }
+  .provider-meta .stars { color: #f5a623; }
+  .in-network {
+    display: flex; align-items: center; gap: 4px;
+    color: var(--green); font-size: 12px; font-weight: 500;
+  }
+  .in-network::before {
+    content: '';
+    width: 12px; height: 12px;
+    background: var(--green);
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* Fit call CTA strip */
+  .fit-call-strip {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .fit-call-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .fit-call-btn {
+    width: 100%;
+    padding: 9px 14px;
+    background: var(--yellow);
+    border: none;
+    border-radius: var(--radius-pill);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+  }
+  .fit-call-btn:hover { background: var(--yellow-dark); }
+  .fit-call-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  /* Right: calendar */
+  .provider-right {
+    flex: 1;
+    padding: 14px;
+    min-width: 0;
+  }
+  .visit-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .visit-tab {
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  .visit-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+
+  /* Calendar grid — matches Zocdoc's block format */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .cal-nav-btn {
+    width: 24px; height: 24px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--white);
+    cursor: pointer;
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+  }
+  .cal-nav-btn:hover { border-color: var(--border-hover); }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-cell {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .cal-cell.empty {
+    cursor: default;
+    background: #f7f7f5;
+    border-color: #efefed;
+  }
+  .cal-cell.has-appts {
+    background: var(--yellow);
+    border-color: var(--yellow-dark);
+  }
+  .cal-cell.has-appts:hover { background: var(--yellow-dark); }
+  .cal-cell.fit-appts {
+    background: var(--yellow-light);
+    border-color: #f0e060;
+    cursor: pointer;
+  }
+  .cal-cell.fit-appts:hover { background: #fff5b0; }
+  .cal-day-name {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    margin-bottom: 2px;
+  }
+  .cal-date {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .cal-cell.empty .cal-day-name,
+  .cal-cell.empty .cal-date { color: #bbb; }
+  .cal-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .cal-count-label {
+    font-size: 9px;
+    color: var(--ink-mid);
+  }
+  .cal-cell.empty .cal-count { color: #bbb; font-weight: 400; }
+  .cal-cell.empty .cal-count-label { color: #ccc; }
+  .cal-more {
+    font-size: 11px;
+    color: var(--ink-muted);
+    background: #f2f2f0;
+    border-color: var(--border);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .cal-more:hover { background: var(--border); }
+
+  /* ── FIT CALL MODAL ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  .overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .sheet {
+    background: var(--white);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 560px;
+    padding: 28px 24px 40px;
+    animation: slideUp 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin: 0 auto 20px;
+  }
+  .sheet-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .sheet-sub {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* Provider mini row in sheet */
+  .sheet-provider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+  }
+  .sheet-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #c8d8d4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; color: #4a7c6f;
+    flex-shrink: 0;
+  }
+  .sheet-pname { font-size: 14px; font-weight: 600; }
+  .sheet-pmeta { font-size: 12px; color: var(--ink-muted); }
+
+  /* Time slots in sheet — smaller block grid */
+  .slots-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+  .slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .slot-block {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--white);
+  }
+  .slot-block:hover { border-color: var(--border-hover); }
+  .slot-block.selected {
+    background: var(--yellow);
+    border-color: var(--yellow-dark);
+  }
+  .slot-day { font-size: 11px; color: var(--ink-muted); margin-bottom: 2px; }
+  .slot-time { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .slot-block.selected .slot-day { color: #7a6200; }
+
+  .sheet-note {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 18px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    background: var(--yellow-light);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--yellow-dark);
+  }
+
+  .btn-full {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-pill);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+  }
+  .btn-yellow { background: var(--yellow); color: var(--ink); }
+  .btn-yellow:hover { background: var(--yellow-dark); }
+  .btn-yellow:disabled { background: #f0e060; color: #aaa; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    color: var(--ink-mid);
+    border: 1.5px solid var(--border);
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  .btn-outline:hover { border-color: var(--border-hover); }
+
+  /* ── CONFIRMATION SCREEN ── */
+  .confirm-screen {
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 0 20px;
+    text-align: center;
+  }
+  .confirm-check {
+    width: 60px; height: 60px;
+    background: var(--yellow);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 20px;
+  }
+  .confirm-h { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+  .confirm-sub { font-size: 14px; color: var(--ink-muted); margin-bottom: 24px; line-height: 1.6; }
+  .confirm-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+  .confirm-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .confirm-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .ck { color: var(--ink-muted); }
+  .cv { font-weight: 500; }
+
+  /* ── POST-SESSION SCREEN ── */
+  .post-screen {
+    max-width: 480px;
+    margin: 32px auto;
+    padding: 0 20px;
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--ink-muted); margin-bottom: 8px;
+  }
+  .post-h { font-size: 24px; font-weight: 600; margin-bottom: 6px; line-height: 1.2; }
+  .post-sub { font-size: 14px; color: var(--ink-muted); margin-bottom: 24px; line-height: 1.6; }
+
+  .session-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 22px;
+  }
+  .s-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #c8d8d4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #4a7c6f;
+    flex-shrink: 0;
+  }
+  .s-name { font-size: 14px; font-weight: 600; }
+  .s-meta { font-size: 12px; color: var(--ink-muted); }
+  .s-badge {
+    margin-left: auto;
+    background: var(--yellow-light);
+    border: 1px solid var(--yellow);
+    border-radius: var(--radius-pill);
+    padding: 3px 10px;
+    font-size: 11px; font-weight: 600; color: #7a6200;
+    white-space: nowrap;
+  }
+
+  .feel-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+  .feel-opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--white);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .feel-opt:hover { border-color: var(--border-hover); }
+  .feel-opt.selected { border-color: var(--ink); }
+  .feel-emoji { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+  .feel-label { font-size: 14px; font-weight: 500; }
+  .feel-desc { font-size: 12px; color: var(--ink-muted); margin-top: 1px; }
+  .feel-radio {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    margin-left: auto; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+  }
+  .feel-opt.selected .feel-radio {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .feel-opt.selected .feel-radio::after {
+    content: ''; width: 6px; height: 6px;
+    background: white; border-radius: 50%;
+  }
+
+  /* Next session / rematch cards */
+  .next-section { margin-bottom: 22px; }
+  .next-label {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    color: var(--ink-muted); margin-bottom: 10px;
+  }
+
+  /* Rematch provider cards */
+  .rematch-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  .rematch-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .rc-top {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    align-items: flex-start;
+  }
+  .rc-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; color: white;
+    flex-shrink: 0;
+  }
+  .rc-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .rc-creds { font-size: 12px; color: var(--ink-muted); margin-bottom: 5px; }
+  .rc-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+  .rc-pill {
+    padding: 2px 8px;
+    background: #f2f2f0;
+    border-radius: var(--radius-pill);
+    font-size: 11px; color: var(--ink-mid); font-weight: 500;
+  }
+  .rc-cal {
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    background: #fafaf7;
+  }
+  .rc-cal-label { font-size: 11px; color: var(--ink-muted); margin-bottom: 8px; font-weight: 500; }
+  .rc-slots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+  }
+  .rc-slot {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 4px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--white);
+    transition: var(--transition);
+  }
+  .rc-slot:hover { border-color: var(--border-hover); }
+  .rc-slot.selected { background: var(--yellow); border-color: var(--yellow-dark); }
+  .rc-slot-day { font-size: 10px; color: var(--ink-muted); }
+  .rc-slot-time { font-size: 11px; font-weight: 600; color: var(--ink); }
+  .rc-slot.selected .rc-slot-day { color: #7a6200; }
+
+  .rc-book-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px;
+    border-radius: var(--radius-pill);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600;
+    background: var(--yellow);
+    border: none; cursor: pointer;
+    transition: var(--transition);
+    color: var(--ink);
+  }
+  .rc-book-btn:hover { background: var(--yellow-dark); }
+  .rc-book-btn:disabled { background: #f0e060; color: #aaa; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SCREEN: SEARCH RESULTS ══════════════════ -->
+<div class="screen active" id="sResults">
+  <div class="nav">
+    <div class="nav-logo">Z</div>
+    <div class="search-bar">
+      <input class="search-seg" value="Therapy" readonly/>
+      <input class="search-seg" value="New York, NY" readonly style="max-width:130px"/>
+      <input class="search-seg" value="Highmark BCBS" readonly style="max-width:150px"/>
+      <button class="search-btn">&#128269;</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-pill">Date &amp; time</div>
+    <div class="filter-pill active">Therapy</div>
+    <div class="filter-pill">Specialty</div>
+    <div class="filter-pill">Distance</div>
+    <div class="filter-pill">In-person / video</div>
+    <div class="filter-pill">More filters · 3</div>
+  </div>
+
+  <div class="main">
+    <div class="results-header">
+      <span class="shield">&#9679;</span>
+      5 in-network providers
+    </div>
+
+    <!-- Card 1: Dr. Maya Reyes -->
+    <div class="provider-card">
+      <div class="card-body">
+        <div class="provider-left">
+          <div class="provider-top">
+            <div class="provider-photo">
+              MR
+              <div class="video-badge">&#9654;</div>
+            </div>
+            <div class="provider-name-block">
+              <div class="sponsored-tag">Sponsored</div>
+              <div class="provider-name">Dr. Maya Reyes, PhD</div>
+              <div class="provider-title">Psychologist · CBT</div>
+            </div>
+          </div>
+          <div class="provider-meta">
+            <div><span class="stars">&#9733;</span> 4.8 · 24 reviews</div>
+            <div>&#128205; 2 mi · Midtown Manhattan</div>
+            <div class="in-network">In-network · Highmark BCBS</div>
+            <div style="color:var(--ink-muted);font-size:12px;">New patients · Excellent wait time</div>
+          </div>
+          <div class="fit-call-strip">
+            <div class="fit-call-label">New — fit call available</div>
+            <button class="fit-call-btn" onclick="openFitCall()">Book a free 15-min fit call</button>
+            <div class="fit-call-sub">No commitment · Video · Free</div>
+          </div>
+        </div>
+
+        <!-- Calendar right -->
+        <div class="provider-right">
+          <div class="visit-tabs">
+            <div class="visit-tab active">In-person visits</div>
+            <div class="visit-tab">Video visits</div>
+          </div>
+          <div class="cal-nav">
+            <button class="cal-nav-btn">&#8249;</button>
+            <span>Today, Mar 29 – Sat, Apr 11</span>
+            <button class="cal-nav-btn">&#8250;</button>
+          </div>
+          <!-- Row 1 -->
+          <div class="cal-grid" style="margin-bottom:4px;">
+            <div class="cal-cell empty"><div class="cal-day-name">Sun</div><div class="cal-date">Mar 29</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Mon</div><div class="cal-date">Mar 30</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Tue</div><div class="cal-date">Mar 31</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Wed</div><div class="cal-date">Apr 1</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Thu</div><div class="cal-date">Apr 2</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell fit-appts" onclick="openFitCall()"><div class="cal-day-name">Fri</div><div class="cal-date">Apr 3</div><div class="cal-count">2</div><div class="cal-count-label">fit calls</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Sat</div><div class="cal-date">Apr 4</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+          </div>
+          <!-- Row 2 -->
+          <div class="cal-grid">
+            <div class="cal-cell empty"><div class="cal-day-name">Sun</div><div class="cal-date">Apr 5</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell has-appts" onclick="openFitCall()"><div class="cal-day-name">Mon</div><div class="cal-date">Apr 6</div><div class="cal-count">9</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Tue</div><div class="cal-date">Apr 7</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Wed</div><div class="cal-date">Apr 8</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Thu</div><div class="cal-date">Apr 9</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Fri</div><div class="cal-date">Apr 10</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell cal-more"><div style="font-size:12px;color:var(--ink-muted)">More</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: James Lim (no fit call) -->
+    <div class="provider-card">
+      <div class="card-body">
+        <div class="provider-left">
+          <div class="provider-top">
+            <div class="provider-photo" style="background:#d4cce8;color:#7a6a9f;">JL
+              <div class="video-badge">&#9654;</div>
+            </div>
+            <div class="provider-name-block">
+              <div class="sponsored-tag">Sponsored</div>
+              <div class="provider-name">James Lim, LCSW</div>
+              <div class="provider-title">Psychotherapist · Psychodynamic</div>
+            </div>
+          </div>
+          <div class="provider-meta">
+            <div><span class="stars">&#9733;</span> 4.6 · 11 reviews</div>
+            <div>&#128205; 1.5 mi · Chelsea</div>
+            <div class="in-network">In-network · Highmark BCBS</div>
+            <div style="color:var(--ink-muted);font-size:12px;">New patients · Good wait time</div>
+          </div>
+        </div>
+        <div class="provider-right">
+          <div class="visit-tabs">
+            <div class="visit-tab active">In-person visits</div>
+            <div class="visit-tab">Video visits</div>
+          </div>
+          <div class="cal-nav">
+            <button class="cal-nav-btn">&#8249;</button>
+            <span>Today, Mar 29 – Sat, Apr 11</span>
+            <button class="cal-nav-btn">&#8250;</button>
+          </div>
+          <div class="cal-grid" style="margin-bottom:4px;">
+            <div class="cal-cell empty"><div class="cal-day-name">Sun</div><div class="cal-date">Mar 29</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Mon</div><div class="cal-date">Mar 30</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell has-appts"><div class="cal-day-name">Tue</div><div class="cal-date">Mar 31</div><div class="cal-count">2</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell has-appts"><div class="cal-day-name">Wed</div><div class="cal-date">Apr 1</div><div class="cal-count">2</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Thu</div><div class="cal-date">Apr 2</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell has-appts"><div class="cal-day-name">Fri</div><div class="cal-date">Apr 3</div><div class="cal-count">1</div><div class="cal-count-label">appt</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Sat</div><div class="cal-date">Apr 4</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-cell empty"><div class="cal-day-name">Sun</div><div class="cal-date">Apr 5</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell has-appts"><div class="cal-day-name">Mon</div><div class="cal-date">Apr 6</div><div class="cal-count">3</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Tue</div><div class="cal-date">Apr 7</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Wed</div><div class="cal-date">Apr 8</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Thu</div><div class="cal-date">Apr 9</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell empty"><div class="cal-day-name">Fri</div><div class="cal-date">Apr 10</div><div class="cal-count">No</div><div class="cal-count-label">appts</div></div>
+            <div class="cal-cell cal-more"><div style="font-size:12px;color:var(--ink-muted)">More</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: CONFIRMED ══════════════════ -->
+<div class="screen" id="sConfirm">
+  <div class="nav">
+    <div class="nav-logo">Z</div>
+    <div style="font-size:14px;font-weight:500;color:var(--ink-mid)">Appointment confirmed</div>
+  </div>
+  <div class="confirm-screen">
+    <div class="confirm-check">&#10003;</div>
+    <div class="confirm-h" id="confirmH">Your fit call is booked.</div>
+    <div class="confirm-sub" id="confirmSub">A calendar invite is on its way. No forms, no prep needed — just show up.</div>
+    <div class="confirm-card">
+      <div class="confirm-row"><span class="ck">Provider</span><span class="cv" id="cProvider">Dr. Maya Reyes, PhD</span></div>
+      <div class="confirm-row"><span class="ck">Type</span><span class="cv" id="cType">15-min fit call</span></div>
+      <div class="confirm-row"><span class="ck">When</span><span class="cv" id="cWhen">—</span></div>
+      <div class="confirm-row"><span class="ck">Format</span><span class="cv">Video</span></div>
+      <div class="confirm-row"><span class="ck">Cost</span><span class="cv">Free</span></div>
+    </div>
+    <button class="btn-full btn-yellow" id="confirmNextBtn" onclick="goPostSession()">Done</button>
+    <button class="btn-full btn-outline" style="margin-top:8px" onclick="show('sResults')">Back to results</button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: POST-SESSION ══════════════════ -->
+<div class="screen" id="sPost">
+  <div class="nav">
+    <div class="nav-logo">Z</div>
+    <div style="font-size:14px;font-weight:500;color:var(--ink-mid)">Your care</div>
+  </div>
+  <div class="post-screen">
+    <div class="eyebrow" id="postEyebrow">After your fit call</div>
+    <div class="post-h" id="postH">How did it feel with Dr. Maya Reyes?</div>
+    <div class="post-sub" id="postSub">This helps us make sure you find the right fit — not just any available therapist.</div>
+
+    <div class="session-pill">
+      <div class="s-avatar">MR</div>
+      <div>
+        <div class="s-name">Dr. Maya Reyes, PhD</div>
+        <div class="s-meta" id="sessionMeta">Fit call · Fri Apr 3 · 15 min</div>
+      </div>
+      <div class="s-badge" id="sessionBadge">Fit call</div>
+    </div>
+
+    <div class="feel-options" id="feelOpts">
+      <div class="feel-opt" data-feel="great" onclick="selectFeel(this)">
+        <div class="feel-emoji">&#128522;</div>
+        <div><div class="feel-label">It felt right</div><div class="feel-desc">I want to book a full session</div></div>
+        <div class="feel-radio"></div>
+      </div>
+      <div class="feel-opt" data-feel="unsure" onclick="selectFeel(this)">
+        <div class="feel-emoji">&#129300;</div>
+        <div><div class="feel-label">Not sure yet</div><div class="feel-desc">I'll return at a later time to book</div></div>
+        <div class="feel-radio"></div>
+      </div>
+      <div class="feel-opt" data-feel="notfit" onclick="selectFeel(this)">
+        <div class="feel-emoji">&#128531;</div>
+        <div><div class="feel-label">Didn't feel like the right fit</div><div class="feel-desc">I'd like to try someone else</div></div>
+        <div class="feel-radio"></div>
+      </div>
+    </div>
+
+    <button class="btn-full btn-yellow" id="feelBtn" onclick="routeFeel()" disabled>Continue</button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: BOOK FULL SESSION ══════════════════ -->
+<div class="screen" id="sBookFull">
+  <div class="nav">
+    <div class="nav-logo">Z</div>
+    <div style="font-size:14px;font-weight:500;color:var(--ink-mid)">Book your first session</div>
+  </div>
+  <div class="post-screen">
+    <div class="eyebrow">Next step</div>
+    <div class="post-h">Book your first full session.</div>
+    <div class="post-sub">50 minutes · In-network · ~$25 copay</div>
+
+    <div class="session-pill">
+      <div class="s-avatar">MR</div>
+      <div>
+        <div class="s-name">Dr. Maya Reyes, PhD</div>
+        <div class="s-meta">In-network · Highmark BCBS · ~$25 copay</div>
+      </div>
+    </div>
+
+    <div class="next-label" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--ink-muted);margin-bottom:10px;">Available slots</div>
+    <div class="slot-grid" id="fullSlots">
+      <div class="slot-block" onclick="selectSlot(this,'Mon Apr 7, 10am')"><div class="slot-day">Mon Apr 7</div><div class="slot-time">10:00am</div></div>
+      <div class="slot-block" onclick="selectSlot(this,'Mon Apr 7, 2pm')"><div class="slot-day">Mon Apr 7</div><div class="slot-time">2:00pm</div></div>
+      <div class="slot-block" onclick="selectSlot(this,'Tue Apr 8, 11am')"><div class="slot-day">Tue Apr 8</div><div class="slot-time">11:00am</div></div>
+      <div class="slot-block" onclick="selectSlot(this,'Wed Apr 9, 9am')"><div class="slot-day">Wed Apr 9</div><div class="slot-time">9:00am</div></div>
+      <div class="slot-block" onclick="selectSlot(this,'Wed Apr 9, 4pm')"><div class="slot-day">Wed Apr 9</div><div class="slot-time">4:00pm</div></div>
+      <div class="slot-block" onclick="selectSlot(this,'Thu Apr 10, 1pm')"><div class="slot-day">Thu Apr 10</div><div class="slot-time">1:00pm</div></div>
+    </div>
+
+    <button class="btn-full btn-yellow" id="fullBookBtn" onclick="bookFull()" disabled style="margin-top:4px;">Book session</button>
+    <button class="btn-full btn-outline" onclick="show('sPost')">Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: REMATCH ══════════════════ -->
+<div class="screen" id="sRematch">
+  <div class="nav">
+    <div class="nav-logo">Z</div>
+    <div style="font-size:14px;font-weight:500;color:var(--ink-mid)">Finding a better match</div>
+  </div>
+  <div class="post-screen">
+    <div class="eyebrow">Your other matches</div>
+    <div class="post-h">Let's try someone else.</div>
+    <div class="post-sub">Both in-network. Both matched to your goals. Sometimes it just takes meeting the right person.</div>
+
+    <div class="rematch-cards">
+      <!-- Rematch A -->
+      <div class="rematch-card">
+        <div class="rc-top">
+          <div class="rc-avatar" style="background:#7a6a9f;">JL</div>
+          <div>
+            <div class="rc-name">James Lim, LCSW</div>
+            <div class="rc-creds">Licensed Clinical Social Worker · 6 yrs</div>
+            <div class="rc-pills">
+              <span class="rc-pill">Psychodynamic</span>
+              <span class="rc-pill">Anxiety</span>
+              <span class="rc-pill">Video only</span>
+            </div>
+          </div>
+        </div>
+        <div class="rc-cal">
+          <div class="rc-cal-label">Book a fit call</div>
+          <div class="rc-slots">
+            <div class="rc-slot" onclick="selectRcSlot(this,'A','Mon Apr 7, 1pm')"><div class="rc-slot-day">Mon Apr 7</div><div class="rc-slot-time">1:00pm</div></div>
+            <div class="rc-slot" onclick="selectRcSlot(this,'A','Tue Apr 8, 3pm')"><div class="rc-slot-day">Tue Apr 8</div><div class="rc-slot-time">3:00pm</div></div>
+            <div class="rc-slot" onclick="selectRcSlot(this,'A','Thu Apr 10, 10am')"><div class="rc-slot-day">Thu Apr 10</div><div class="rc-slot-time">10:00am</div></div>
+            <div class="rc-slot" onclick="selectRcSlot(this,'A','Fri Apr 11, 2pm')"><div class="rc-slot-day">Fri Apr 11</div><div class="rc-slot-time">2:00pm</div></div>
+          </div>
+          <button class="rc-book-btn" id="rcBtnA" onclick="bookRematch('James Lim, LCSW')" disabled>Confirm fit call</button>
+        </div>
+      </div>
+
+      <!-- Rematch B -->
+      <div class="rematch-card">
+        <div class="rc-top">
+          <div class="rc-avatar" style="background:#c9622f;">SA</div>
+          <div>
+            <div class="rc-name">Dr. Selin Aydın, PsyD</div>
+            <div class="rc-creds">Clinical Psychologist · 12 yrs</div>
+            <div class="rc-pills">
+              <span class="rc-pill">Somatic</span>
+              <span class="rc-pill">Trauma</span>
+              <span class="rc-pill">LGBTQ+ affirming</span>
+            </div>
+          </div>
+        </div>
+        <div class="rc-cal">
+          <div class="rc-cal-label">Book a fit call</div>
+          <div class="rc-slots">
+            <div class="rc-slot" onclick="selectRcSlot(this,'B','Wed Apr 9, 11am')"><div class="rc-slot-day">Wed Apr 9</div><div class="rc-slot-time">11:00am</div></div>
+            <div class="rc-slot" onclick="selectRcSlot(this,'B','Wed Apr 9, 4pm')"><div class="rc-slot-day">Wed Apr 9</div><div class="rc-slot-time">4:00pm</div></div>
+            <div class="rc-slot" onclick="selectRcSlot(this,'B','Fri Apr 11, 9am')"><div class="rc-slot-day">Fri Apr 11</div><div class="rc-slot-time">9:00am</div></div>
+            <div class="rc-slot" onclick="selectRcSlot(this,'B','Fri Apr 11, 3pm')"><div class="rc-slot-day">Fri Apr 11</div><div class="rc-slot-time">3:00pm</div></div>
+          </div>
+          <button class="rc-book-btn" id="rcBtnB" onclick="bookRematch('Dr. Selin Aydın, PsyD')" disabled>Confirm fit call</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-full btn-outline" onclick="show('sPost')">Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════ FIT CALL BOOKING SHEET ══════════════════ -->
+<div class="overlay" id="fitSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Book a free fit call</div>
+    <div class="sheet-sub">15 minutes · Video · No commitment. Just a chance to see if it clicks before booking a full session.</div>
+
+    <div class="sheet-provider">
+      <div class="sheet-avatar">MR</div>
+      <div>
+        <div class="sheet-pname">Dr. Maya Reyes, PhD</div>
+        <div class="sheet-pmeta">Psychologist · CBT · In-network</div>
+      </div>
+    </div>
+
+    <div class="slots-label">Available fit call times</div>
+    <div class="slot-grid" id="fitSlotGrid">
+      <div class="slot-block" onclick="selectFitSlot(this,'Fri Apr 3, 12pm')"><div class="slot-day">Fri Apr 3</div><div class="slot-time">12:00pm</div></div>
+      <div class="slot-block" onclick="selectFitSlot(this,'Fri Apr 3, 3pm')"><div class="slot-day">Fri Apr 3</div><div class="slot-time">3:00pm</div></div>
+      <div class="slot-block" onclick="selectFitSlot(this,'Mon Apr 6, 9am')"><div class="slot-day">Mon Apr 6</div><div class="slot-time">9:00am</div></div>
+      <div class="slot-block" onclick="selectFitSlot(this,'Mon Apr 6, 11am')"><div class="slot-day">Mon Apr 6</div><div class="slot-time">11:00am</div></div>
+      <div class="slot-block" onclick="selectFitSlot(this,'Mon Apr 6, 1pm')"><div class="slot-day">Mon Apr 6</div><div class="slot-time">1:00pm</div></div>
+      <div class="slot-block" onclick="selectFitSlot(this,'Mon Apr 6, 4pm')"><div class="slot-day">Mon Apr 6</div><div class="slot-time">4:00pm</div></div>
+    </div>
+
+    <div class="sheet-note">After your fit call, we'll ask how it went. If it clicked, we'll help you book your first full session. If not, we'll show you your next two matches.</div>
+
+    <button class="btn-full btn-yellow" id="fitConfirmBtn" onclick="confirmFitCall()" disabled>Confirm fit call</button>
+    <button class="btn-full btn-outline" onclick="closeSheet()">Cancel</button>
+  </div>
+</div>
+
+<script>
+  let selectedFitSlot = '';
+  let selectedFullSlot = '';
+  let selectedFeel = '';
+  let rcSlots = { A: '', B: '' };
+  let isFitCall = true;
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openFitCall() {
+    document.getElementById('fitSheet').classList.add('open');
+  }
+  function closeSheet() {
+    document.getElementById('fitSheet').classList.remove('open');
+  }
+  document.getElementById('fitSheet').addEventListener('click', function(e) {
+    if (e.target === this) closeSheet();
+  });
+
+  function selectFitSlot(el, time) {
+    document.querySelectorAll('#fitSlotGrid .slot-block').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedFitSlot = time;
+    document.getElementById('fitConfirmBtn').disabled = false;
+  }
+
+  function confirmFitCall() {
+    closeSheet();
+    document.getElementById('cProvider').textContent = 'Dr. Maya Reyes, PhD';
+    document.getElementById('cType').textContent = '15-min fit call';
+    document.getElementById('cWhen').textContent = selectedFitSlot;
+    document.getElementById('confirmH').textContent = 'Your fit call is booked.';
+    document.getElementById('confirmSub').textContent = "A calendar invite and confirmation are on the way.";
+    document.getElementById('confirmNextBtn').textContent = 'Done';
+    show('sConfirm');
+  }
+
+  function goPostSession() {
+    document.getElementById('postEyebrow').textContent = 'After your fit call';
+    document.getElementById('postH').textContent = 'How did it feel with Dr. Maya Reyes?';
+    document.getElementById('sessionMeta').textContent = 'Fit call · ' + selectedFitSlot + ' · 15 min';
+    document.getElementById('sessionBadge').textContent = 'Fit call';
+    isFitCall = true;
+    show('sPost');
+  }
+
+  function selectFeel(el) {
+    document.querySelectorAll('.feel-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedFeel = el.dataset.feel;
+    document.getElementById('feelBtn').disabled = false;
+  }
+
+  function routeFeel() {
+    if (selectedFeel === 'great') show('sBookFull');
+    else if (selectedFeel === 'unsure') show('sResults');
+    else show('sRematch');
+  }
+
+  function selectSlot(el, time) {
+    document.querySelectorAll('#fullSlots .slot-block').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedFullSlot = time;
+    document.getElementById('fullBookBtn').disabled = false;
+  }
+
+  function bookFull() {
+    document.getElementById('cProvider').textContent = 'Dr. Maya Reyes, PhD';
+    document.getElementById('cType').textContent = '50-min therapy session';
+    document.getElementById('cWhen').textContent = selectedFullSlot;
+    document.getElementById('confirmH').textContent = 'Session booked.';
+    document.getElementById('confirmSub').textContent = "You're all set. We'll check in after this one too.";
+    document.getElementById('confirmNextBtn').textContent = 'View my appointments';
+    show('sConfirm');
+  }
+
+  function selectRcSlot(el, card, time) {
+    const parent = el.closest('.rc-slots');
+    parent.querySelectorAll('.rc-slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    rcSlots[card] = time;
+    document.getElementById('rcBtn' + card).disabled = false;
+  }
+
+  function bookRematch(name) {
+    const card = name.includes('James') ? 'A' : 'B';
+    document.getElementById('cProvider').textContent = name;
+    document.getElementById('cType').textContent = '15-min fit call';
+    document.getElementById('cWhen').textContent = rcSlots[card];
+    document.getElementById('confirmH').textContent = 'Fit call booked.';
+    document.getElementById('confirmSub').textContent = 'Same deal — 15 minutes, no commitment. We\'ll follow up after.';
+    document.getElementById('confirmNextBtn').textContent = 'Done';
+    show('sConfirm');
+  }
+
+  // ── DEMO LOOP ──
+  const DEMO_DELAY = 3800;
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function highlight(el) {
+    el.style.transition = 'box-shadow 0.2s ease, transform 0.2s ease';
+    el.style.boxShadow = '0 0 0 3px #FFE234, 0 0 0 6px rgba(255,226,52,0.4)';
+    el.style.transform = 'scale(1.02)';
+    setTimeout(() => {
+      el.style.boxShadow = '';
+      el.style.transform = '';
+    }, 900);
+  }
+
+  function setDemoOverlay(visible) {
+    document.getElementById('demoOverlay').style.opacity = visible ? '1' : '0';
+    document.getElementById('demoOverlay').style.pointerEvents = visible ? 'all' : 'none';
+    document.body.style.opacity = visible ? '1' : '1';
+  }
+
+  async function runDemo() {
+    setDemoOverlay(false);
+    await sleep(100);
+
+    // Step 1: Show results page
+    show('sResults');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await sleep(1200);
+
+    // Step 2: Highlight + open fit call sheet
+    const fitBtn = document.querySelector('.fit-call-btn');
+    highlight(fitBtn);
+    await sleep(700);
+    openFitCall();
+    await sleep(DEMO_DELAY);
+
+    // Step 3: Select a slot
+    const slot = document.querySelector('#fitSlotGrid .slot-block');
+    highlight(slot);
+    await sleep(600);
+    selectFitSlot(slot, 'Fri Apr 3, 12pm');
+    await sleep(DEMO_DELAY);
+
+    // Step 4: Confirm fit call
+    const confirmBtn = document.getElementById('fitConfirmBtn');
+    highlight(confirmBtn);
+    await sleep(700);
+    confirmFitCall();
+    await sleep(DEMO_DELAY);
+
+    // Step 5: Click Done
+    const doneBtn = document.getElementById('confirmNextBtn');
+    highlight(doneBtn);
+    await sleep(700);
+    goPostSession();
+    await sleep(DEMO_DELAY);
+
+    // Step 6: Select "didn't feel like the right fit"
+    const notFitOpt = document.querySelector('.feel-opt[data-feel="notfit"]');
+    highlight(notFitOpt);
+    await sleep(700);
+    selectFeel(notFitOpt);
+    await sleep(DEMO_DELAY);
+
+    // Step 7: Click Continue → rematch screen
+    const feelBtn = document.getElementById('feelBtn');
+    highlight(feelBtn);
+    await sleep(700);
+    routeFeel();
+
+    // End — show replay
+    await sleep(1200);
+    document.getElementById('demoPlayLabel').textContent = 'Replay demo';
+    setDemoOverlay(true);
+  }
+</script>
+
+<!-- Demo overlay — centered, dims page behind it -->
+<div id="demoOverlay" style="
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+  background: rgba(0,0,0,0.6);
+">
+  <button onclick="runDemo()" style="
+    padding: 20px 48px;
+    background: #FFE234;
+    border: none;
+    border-radius: 99px;
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    transition: background 0.18s ease, transform 0.18s ease;
+    letter-spacing: -0.3px;
+  "
+  onmouseover="this.style.background='#e6cb00';this.style.transform='scale(1.03)'"
+  onmouseout="this.style.background='#FFE234';this.style.transform='scale(1)'">
+    <span id="demoPlayLabel">&#9654;&nbsp; Play demo</span>
+  </button>
+</div>
+
+<style>
+  body { transition: opacity 0.3s ease; }
+</style>
+
+</body>
+</html>
